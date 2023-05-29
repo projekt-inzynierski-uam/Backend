@@ -1,8 +1,9 @@
-import express, {Express, Request, Response} from 'express'
+import express, {Express, Request, Response, response} from 'express'
 import dotenv from 'dotenv'
 import mysql, {Connection} from 'mysql'
 import cors from 'cors'
 import bodyParser from 'body-parser'
+import { ok } from 'assert'
 
 dotenv.config();
 
@@ -24,14 +25,8 @@ app.post('/login', (req, res) => {
     // Query the database for login and password match
     const query = `SELECT * FROM users WHERE login = '${login}' AND password = '${password}'`;
     db.query(query, (err, result) => {
-      if (err) {
-        throw err;
-      }
-  
       if (result.length > 0) {
-        res.json({ isSuccess: true, data: result[0] });
-      } else {
-        res.json({ isSuccess: false });
+        res.send(200)
       }
     });
   });
