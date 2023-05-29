@@ -26,7 +26,7 @@ app.post('/login', (req, res) => {
     const query = `SELECT * FROM users WHERE login = '${login}' AND password = '${password}'`;
     db.query(query, (err, result) => {
       if (result.length > 0) {
-        res.send(200)
+        res.status(200).send()
       }
     });
   });
