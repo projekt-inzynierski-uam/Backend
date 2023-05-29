@@ -20,6 +20,7 @@ app.use(cors())
 app.use(bodyParser.json())
 
 app.post('/login', (req, res) => {
+    console.log('chuj')
     const { login, password } = req.body;
   
     // Query the database for login and password match
