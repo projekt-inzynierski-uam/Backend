@@ -20,14 +20,29 @@ app.use(cors())
 app.use(bodyParser.json())
 
 app.post('/login', (req, res) => {
-    console.log('chuj')
     const { login, password } = req.body;
   
     // Query the database for login and password match
-    const query = `SELECT * FROM users WHERE login = '${login}' AND password = '${password}'`;
+    const query = `SELECT * FROM users WHERE username = '${login}' AND password = '${password}'`;
     db.query(query, (err, result) => {
       if (result.length > 0) {
         res.status(200).send()
+      }
+    });
+  });
+
+app.listen(port, ()=>{
+    console.log(`Server is up! at http//localhost:${port}`)
+})
+
+app.post('/user', (req: Request, res: Response) => {
+    const {login} = req.body;
+  
+    // Query the database for login and password match
+    const query = `SELECT username FROM users WHERE username = '${login}'`;
+    db.query(query, (err, result) => {
+      if (result.length > 0) {
+        res.send(result.json())
       }
     });
   });
