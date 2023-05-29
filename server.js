@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const mysql_1 = __importDefault(require("mysql"));
+const cors_1 = __importDefault(require("cors"));
+const body_parser_1 = __importDefault(require("body-parser"));
 dotenv_1.default.config();
 const db = mysql_1.default.createConnection({
     host: process.env.HOST,
@@ -15,12 +17,22 @@ const db = mysql_1.default.createConnection({
 });
 const app = (0, express_1.default)();
 const port = process.env.PORT;
-app.get('/', (req, res) => {
-    const q = 'SELECT * FROM tbl_user';
-    db.query(q, (err, data) => {
-        if (err)
-            return res.json(err);
-        return res.json(data);
+app.use((0, cors_1.default)());
+app.use(body_parser_1.default.json());
+app.post('/login', (req, res) => {
+    const { login, password } = req.body;
+    // Query the database for login and password match
+    const query = `SELECT * FROM users WHERE login = '${login}' AND password = '${password}'`;
+    db.query(query, (err, result) => {
+        if (err) {
+            throw err;
+        }
+        if (result.length > 0) {
+            res.json({ isSuccess: true, data: result[0] });
+        }
+        else {
+            res.json({ isSuccess: false });
+        }
     });
 });
 app.listen(port, () => {
