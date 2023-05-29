@@ -31,18 +31,14 @@ app.post('/login', (req, res) => {
     });
   });
 
-app.listen(port, ()=>{
-    console.log(`Server is up! at http//localhost:${port}`)
-})
-
-app.post('/user', (req: Request, res: Response) => {
+app.post(`/user`, (req: Request, res: Response) => {
     const {login} = req.body;
   
     // Query the database for login and password match
     const query = `SELECT username FROM users WHERE username = '${login}'`;
     db.query(query, (err, result) => {
       if (result.length > 0) {
-        res.send(result.json())
+        res.status(200).send(result.json())
       }
     });
   });
