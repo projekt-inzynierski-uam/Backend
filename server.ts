@@ -3,7 +3,6 @@ import dotenv from 'dotenv'
 import mysql, {Connection} from 'mysql'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-import { ok } from 'assert'
 
 dotenv.config();
 
@@ -20,25 +19,11 @@ app.use(cors())
 app.use(bodyParser.json())
 
 app.post('/login', (req, res) => {
-    const { login, password } = req.body;
-  
-    // Query the database for login and password match
+    const { login, password } = req.body.body;
     const query = `SELECT * FROM users WHERE username = '${login}' AND password = '${password}'`;
     db.query(query, (err, result) => {
-      if (result.length > 0) {
-        res.status(200).send()
-      }
-    });
-  });
-
-app.post(`/user`, (req: Request, res: Response) => {
-    const {login} = req.body;
-  
-    // Query the database for login and password match
-    const query = `SELECT username FROM users WHERE username = '${login}'`;
-    db.query(query, (err, result) => {
-      if (result.length > 0) {
-        res.status(200).send(result.json())
+      if (result) {
+        res.status(200);
       }
     });
   });
