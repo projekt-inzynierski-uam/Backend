@@ -5,7 +5,7 @@ import {v4} from 'uuid'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 9001
 const app = express()
 app.use(cors())
 app.use(express.json())
