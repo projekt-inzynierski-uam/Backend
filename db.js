@@ -1,24 +1,20 @@
+import pg from 'pg'
+const {Pool} = pg
 import dotenv from 'dotenv'
-import postgres from 'postgres'
 dotenv.config();
 
-const pool = postgres({
+let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, DBPORT} = process.env;
+
+const pool = new Pool({
   host: PGHOST,
   database: PGDATABASE,
   username: PGUSER,
   password: PGPASSWORD,
-  port: 5432,
-  ssl: 'require',
-  connection: {
-    options: `project=${ENDPOINT_ID}`,
+  port: DBPORT,
+  ssl: {
+    require: false,
   },
 });
 
-async function getPostgresVersion() {
-  const response = await sql`select version()`;
-  console.log(response);
-}
-
-getPostgresVersion();
 
 export default pool
