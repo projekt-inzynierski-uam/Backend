@@ -1,15 +1,20 @@
-import dotenv from 'dotenv'
 import pg from 'pg'
+const {Pool} = pg
+import dotenv from 'dotenv'
 dotenv.config();
 
-const {Pool} = pg
+let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, DBPORT} = process.env;
+
 const pool = new Pool({
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    host: process.env.HOST,
-    port: process.env.DBPORT,
-    database: 'todoapp'
-})
+  host: PGHOST,
+  database: PGDATABASE,
+  username: PGUSER,
+  password: PGPASSWORD,
+  port: DBPORT,
+  ssl: {
+    require: false,
+  },
+});
 
 
 export default pool
