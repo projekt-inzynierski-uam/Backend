@@ -42,6 +42,20 @@ app.post('/todos', async (req, res) => {
     }
 })
 
+//create a new group
+app.post('/group', async (req, res) => {
+    const {group_name, user_email} = req.body
+    const id = v4()
+    try{
+        const newGroup = await pool.query(`INSERT INTO groups(id, group_name) VALUES ($1, $2)`, [id, group_name])
+        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
+        res.json(newGroup)
+        res.json(addGroupOwner)
+    }catch(err){
+        console.error(err)
+    }
+})
+
 //edit a todo
 app.put('/todos/:id', async(req, res) => {
     const {id} = req.params
