@@ -35,11 +35,7 @@ app.post('/todos', async (req, res) => {
     const {user_email, title} = req.body
     const id = v4()
     try{
-<<<<<<< Updated upstream
-        const newToDo = await pool.query(`INSERT INTO todos(id, user_email, title) VALUES ($1, $2, $3)`, [id, user_email, title])
-=======
         const newToDo = await pool.query(`INSERT INTO todos(id, user_email, title, is_assigned_to_group) VALUES ($1, $2, $3, FALSE)`, [id, user_email, title])
->>>>>>> Stashed changes
         res.json(newToDo)
     }catch(err){
         console.error(err)
