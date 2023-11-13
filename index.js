@@ -59,7 +59,7 @@ app.post('/group', async (req, res) => {
 //join to group
 app.post('/groupjoin', async (req, res) => {
     const {group_name, user_email} = req.body
-    const id = await pool.query(`SELECT id FROM groups WHERE group_name = $1`, [group_name])
+    const id = await pool.query(`SELECT id FROM groups WHERE name = $1`, [group_name])
     console.log(id)
     try{
         const addGroupMember = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
