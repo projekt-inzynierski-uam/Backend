@@ -23,7 +23,7 @@ app.get('/todos/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const todos = await pool.query('SELECT * FROM todos WHERE user_email = $1', [userEmail])
+        const todos = await pool.query('SELECT * FROM todos WHERE assigned = $1', [userEmail])
         res.json(todos.rows)
     } catch (err){
         console.error(err)
@@ -35,7 +35,7 @@ app.post('/todos', async (req, res) => {
     const {user_email, title} = req.body
     const id = v4()
     try{
-        const newToDo = await pool.query(`INSERT INTO todos(id, user_email, title, is_assigned_to_group) VALUES ($1, $2, $3, FALSE)`, [id, user_email, title])
+        const newToDo = await pool.query(`INSERT INTO todos(id, assigned, title) VALUES ($1, $2, $3)`, [id, user_email, title])
         res.json(newToDo)
     }catch(err){
         console.error(err)
@@ -59,8 +59,8 @@ app.post('/group', async (req, res) => {
 //join to group
 app.post('/groupjoin', async (req, res) => {
     const {group_name, user_email} = req.body
-    const id = await pool.query(`SELECT id FROM groups WHERE name = $1`, [group_name])
-    console.log(id)
+    const group_id = await pool.query(`SELECT id FROM groups WHERE name = $1`, [group_name])
+    const {id} = group_id.rows[0]
     try{
         const addGroupMember = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
         res.json(addGroupMember)
@@ -69,6 +69,31 @@ app.post('/groupjoin', async (req, res) => {
     }
 })
 
+//get all todos in group
+app.get('/todos-group/:groupID', async (req, res) => {
+    
+    const { groupID } = req.params;
+    
+    try {
+        const todos = await pool.query('SELECT * FROM todos WHERE assigned = $1', [groupID])
+        res.json(todos.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get all groups
+app.get('/groups/:userEmail', async (req, res) => {
+
+    const { userEmail } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT DISTINCT groups.id, groups.name FROM groups INNER JOIN user_in_groups ON groups.id = user_in_groups.group_id INNER JOIN users ON users.email = user_in_groups.user_email WHERE user_email = $1`, [userEmail])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
 
 //edit a todo
 app.put('/todos/:id', async(req, res) => {
