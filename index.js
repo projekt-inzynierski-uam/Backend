@@ -32,10 +32,10 @@ app.get('/todos/:userEmail', async (req, res) => {
 
 //create a new todo
 app.post('/todos', async (req, res) => {
-    const {user_email, title} = req.body
+    const {assigned, title} = req.body
     const id = v4()
     try{
-        const newToDo = await pool.query(`INSERT INTO todos(id, assigned, title) VALUES ($1, $2, $3)`, [id, user_email, title])
+        const newToDo = await pool.query(`INSERT INTO todos(id, assigned, title) VALUES ($1, $2, $3)`, [id, assigned, title])
         res.json(newToDo)
     }catch(err){
         console.error(err)
