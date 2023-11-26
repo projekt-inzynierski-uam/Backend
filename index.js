@@ -44,19 +44,6 @@ app.post('/todos', async (req, res) => {
     }
 })
 
-//get all todos in group
-app.get('/todos-group/:groupID', async (req, res) => {
-    
-    const { groupID } = req.params;
-    
-    try {
-        const todos = await pool.query('SELECT * FROM todos WHERE assigned = $1', [groupID])
-        res.json(todos.rows)
-    } catch (err){
-        console.error(err)
-    }
-})
-
 //edit a todo
 app.put('/todos/:id', async(req, res) => {
     const {id} = req.params
