@@ -118,6 +118,17 @@ app.delete('/todos/:id', async(req, res) => {
     }
 })
 
+//delete a group
+app.delete('/groups/:groupID', async(req, res) => {
+    const {groupID} = req.params
+    try{
+        const deleteGroup = await pool.query('DELETE FROM groups WHERE id = $1', [groupID])
+        res.json(deleteGroup)
+    }catch(err){
+        console.error(err)
+    }
+})
+
 //signup
 
 app.post('/signup', async (req, res) =>{
