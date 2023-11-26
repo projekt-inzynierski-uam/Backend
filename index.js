@@ -17,6 +17,8 @@ app.use(cors(corsConfig))
 app.options("", cors(corsConfig))
 app.use(express.json())
 
+//TODOS
+
 //get all todos
 app.get('/todos/:userEmail', async (req, res) => {
     
@@ -41,6 +43,31 @@ app.post('/todos', async (req, res) => {
         console.error(err)
     }
 })
+
+//edit a todo
+app.put('/todos/:id', async(req, res) => {
+    const {id} = req.params
+    const {title} = req.body
+    try{
+        const editToDo = await pool.query('UPDATE todos SET title = $1 WHERE id = $2', [title, id])
+        res.json(editToDo)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//delete a todo
+app.delete('/todos/:id', async(req, res) => {
+    const {id} = req.params
+    try{
+        const deleteToDo = await pool.query('DELETE FROM todos WHERE id = $1', [id])
+        res.json(deleteToDo)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//GROUPS
 
 //create a new group
 app.post('/group', async (req, res) => {
@@ -69,19 +96,6 @@ app.post('/groupjoin', async (req, res) => {
     }
 })
 
-//get all todos in group
-app.get('/todos-group/:groupID', async (req, res) => {
-    
-    const { groupID } = req.params;
-    
-    try {
-        const todos = await pool.query('SELECT * FROM todos WHERE assigned = $1', [groupID])
-        res.json(todos.rows)
-    } catch (err){
-        console.error(err)
-    }
-})
-
 //get all groups
 app.get('/groups/:userEmail', async (req, res) => {
 
@@ -95,28 +109,18 @@ app.get('/groups/:userEmail', async (req, res) => {
     }
 })
 
-//edit a todo
-app.put('/todos/:id', async(req, res) => {
-    const {id} = req.params
-    const {title} = req.body
+//delete a group
+app.delete('/groups/:groupID', async(req, res) => {
+    const {groupID} = req.params
     try{
-        const editToDo = await pool.query('UPDATE todos SET title = $1 WHERE id = $2', [title, id])
-        res.json(editToDo)
+        const deleteGroup = await pool.query('DELETE FROM groups WHERE id = $1', [groupID])
+        res.json(deleteGroup)
     }catch(err){
         console.error(err)
     }
 })
 
-//delete a todo
-app.delete('/todos/:id', async(req, res) => {
-    const {id} = req.params
-    try{
-        const deleteToDo = await pool.query('DELETE FROM todos WHERE id = $1', [id])
-        res.json(deleteToDo)
-    }catch(err){
-        console.error(err)
-    }
-})
+//LOGIN REGISTER
 
 //signup
 
