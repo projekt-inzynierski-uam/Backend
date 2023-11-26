@@ -113,8 +113,10 @@ app.get('/groups/:userEmail', async (req, res) => {
 app.delete('/groups/:groupID', async(req, res) => {
     const {groupID} = req.params
     try{
-        const deleteGroup = await pool.query('DELETE FROM groups WHERE id = $1', [groupID])
-        res.json(deleteGroup)
+        const deleteFromGroupConnects = await pool.query('DELETE from user_in_groups WHERE group_id = $1', [groupID])
+        const deleteFromGroup = await pool.query('DELETE FROM groups WHERE id = $1', [groupID])
+        res.json(deleteFromGroupConnects)
+        res.json(deleteFromGroup)
     }catch(err){
         console.error(err)
     }
