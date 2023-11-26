@@ -17,6 +17,8 @@ app.use(cors(corsConfig))
 app.options("", cors(corsConfig))
 app.use(express.json())
 
+//TODOS
+
 //get all todos
 app.get('/todos/:userEmail', async (req, res) => {
     
@@ -42,33 +44,6 @@ app.post('/todos', async (req, res) => {
     }
 })
 
-//create a new group
-app.post('/group', async (req, res) => {
-    const {group_name, user_email} = req.body
-    const id = v4()
-    try{
-        const newGroup = await pool.query(`INSERT INTO groups(id, name) VALUES ($1, $2)`, [id, group_name])
-        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
-        res.json(newGroup)
-        res.json(addGroupOwner)
-    }catch(err){
-        console.error(err)
-    }
-})
-
-//join to group
-app.post('/groupjoin', async (req, res) => {
-    const {group_name, user_email} = req.body
-    const group_id = await pool.query(`SELECT id FROM groups WHERE name = $1`, [group_name])
-    const {id} = group_id.rows[0]
-    try{
-        const addGroupMember = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
-        res.json(addGroupMember)
-    }catch(err){
-        console.error(err)
-    }
-})
-
 //get all todos in group
 app.get('/todos-group/:groupID', async (req, res) => {
     
@@ -77,19 +52,6 @@ app.get('/todos-group/:groupID', async (req, res) => {
     try {
         const todos = await pool.query('SELECT * FROM todos WHERE assigned = $1', [groupID])
         res.json(todos.rows)
-    } catch (err){
-        console.error(err)
-    }
-})
-
-//get all groups
-app.get('/groups/:userEmail', async (req, res) => {
-
-    const { userEmail } = req.params;
-    
-    try {
-        const groups = await pool.query(`SELECT DISTINCT groups.id, groups.name FROM groups INNER JOIN user_in_groups ON groups.id = user_in_groups.group_id INNER JOIN users ON users.email = user_in_groups.user_email WHERE user_email = $1`, [userEmail])
-        res.json(groups.rows)
     } catch (err){
         console.error(err)
     }
@@ -118,6 +80,48 @@ app.delete('/todos/:id', async(req, res) => {
     }
 })
 
+//GROUPS
+
+//create a new group
+app.post('/group', async (req, res) => {
+    const {group_name, user_email} = req.body
+    const id = v4()
+    try{
+        const newGroup = await pool.query(`INSERT INTO groups(id, name) VALUES ($1, $2)`, [id, group_name])
+        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
+        res.json(newGroup)
+        res.json(addGroupOwner)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//join to group
+app.post('/groupjoin', async (req, res) => {
+    const {group_name, user_email} = req.body
+    const group_id = await pool.query(`SELECT id FROM groups WHERE name = $1`, [group_name])
+    const {id} = group_id.rows[0]
+    try{
+        const addGroupMember = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
+        res.json(addGroupMember)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//get all groups
+app.get('/groups/:userEmail', async (req, res) => {
+
+    const { userEmail } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT DISTINCT groups.id, groups.name FROM groups INNER JOIN user_in_groups ON groups.id = user_in_groups.group_id INNER JOIN users ON users.email = user_in_groups.user_email WHERE user_email = $1`, [userEmail])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
 //delete a group
 app.delete('/groups/:groupID', async(req, res) => {
     const {groupID} = req.params
@@ -128,6 +132,8 @@ app.delete('/groups/:groupID', async(req, res) => {
         console.error(err)
     }
 })
+
+//LOGIN REGISTER
 
 //signup
 
