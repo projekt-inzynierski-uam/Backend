@@ -1,7 +1,9 @@
 import pg from 'pg'
-const {Pool} = pg
 import dotenv from 'dotenv'
+
 dotenv.config();
+
+const {Pool} = pg
 
 let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, DBPORT} = process.env;
 
