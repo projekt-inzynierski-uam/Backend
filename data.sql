@@ -21,3 +21,18 @@ CREATE TABLE user_in_groups (
     group_id VARCHAR(255) REFERENCES groups (id),
     user_email VARCHAR(255) REFERENCES users (email)
 )
+
+CREATE TABLE objectives (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(25),
+    min_points INTEGER,
+    max_points INTEGER,
+    current_points INTEGER
+
+)
+
+CREATE TABLE users_objectives_connection (
+    id SERIAL PRIMARY KEY,
+    objective_id INTEGER REFERENCES objectives (id),
+    user_email VARCHAR(255) REFERENCES users (email)
+)
