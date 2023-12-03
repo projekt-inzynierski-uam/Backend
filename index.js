@@ -167,6 +167,21 @@ app.post('/login', async (req, res) =>{
     }
 })
 
+//Objectives 
+
+//get objectives
+app.get('/objectives/:userEmail', async (req, res) => {
+
+    const { userEmail } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1`, [userEmail])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
 app.listen(PORT, () => 
     console.log(`Server running on port ${PORT}`)
 )
