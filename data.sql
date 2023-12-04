@@ -43,4 +43,3 @@ CREATE TABLE active_objective (
     objective_id VARCHAR(255) REFERENCES objectives (id),
     user_email VARCHAR(255) REFERENCES users (email)
 );
-
