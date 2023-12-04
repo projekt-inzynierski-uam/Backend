@@ -23,16 +23,15 @@ CREATE TABLE user_in_groups (
 )
 
 CREATE TABLE objectives (
-    id SERIAL PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(25),
     min_points INTEGER,
     max_points INTEGER,
     current_points INTEGER
-
 )
 
 CREATE TABLE users_objectives_connection (
     id SERIAL PRIMARY KEY,
-    objective_id INTEGER REFERENCES objectives (id),
+    objective_id VARCHAR(255) REFERENCES objectives (id),
     user_email VARCHAR(255) REFERENCES users (email)
 )
