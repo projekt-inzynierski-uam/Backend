@@ -4,6 +4,8 @@ CREATE TABLE todos (
     id VARCHAR(255) PRIMARY KEY,
     assigned VARCHAR(255),
     title VARCHAR(30),
+    startdate DATE NOT NULL,
+    finishdate DATE NOT NULL
 );
 
 CREATE TABLE users (
