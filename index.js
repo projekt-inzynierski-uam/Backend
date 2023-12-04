@@ -169,6 +169,19 @@ app.post('/login', async (req, res) =>{
 
 //Objectives 
 
+//get actual objective
+app.get('/unfinishedobjective/:userEmail', async (req, res) => {
+
+    const { userEmail } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM active_objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1`, [userEmail])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
 //get unfinished objectives
 app.get('/unfinishedobjectives/:userEmail', async (req, res) => {
 
