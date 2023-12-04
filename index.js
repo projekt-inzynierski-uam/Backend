@@ -169,15 +169,28 @@ app.post('/login', async (req, res) =>{
 
 //Objectives 
 
-//get actual objective
-app.get('/unfinishedobjective/:userEmail', async (req, res) => {
+//get active objective
+app.get('/activeobjective/:userEmail', async (req, res) => {
 
     const { userEmail } = req.params;
     
     try {
-        const groups = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM active_objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1`, [userEmail])
+        const groups = await pool.query(`SELECT objectives.id, objectives.max_points, objectives.current_points FROM active_objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1`, [userEmail])
         res.json(groups.rows)
     } catch (err){
+        console.error(err)
+    }
+})
+
+//edit active objective
+
+app.put('/editactiveobjective/:objectiveid', async(req, res) => {
+    const {objectiveid} = req.params
+    const {userEmail} = req.body
+    try{
+        const editActiveObjective = await pool.query('UPDATE active_objective SET objective.id = $1 WHERE user_email = $2', [objectiveid, userEmail])
+        res.json(editActiveObjective)
+    }catch(err){
         console.error(err)
     }
 })
