@@ -211,6 +211,17 @@ app.post('/createobjective', async (req, res) => {
 
 //edit objective
 
+app.put('/editobjective/:objectiveid', async(req, res) => {
+    const {objectiveid} = req.params
+    const {title, current_points, max_points} = req.body
+    try{
+        const editObjective = await pool.query('UPDATE objectives SET title = $1, current_points = $2, max_points = $3 WHERE id = $4', [title, current_points, max_points, objectiveid])
+        res.json(editObjective)
+    }catch(err){
+        console.error(err)
+    }
+})
+
 //delete objective
 app.delete('/deleteobjective/:objectiveid', async(req, res) => {
     const {objectiveid} = req.params
