@@ -37,8 +37,10 @@ app.put('/finishtask/:userEmail', async(req, res) => {
     const {userEmail} = req.params
     const {points} = req.body
     try{
-        const editTask = await pool.query('UPDATE objectives SET current_points = current_points + $1 FROM active_objective WHERE user_email = $2', [points,userEmail])
-        res.json(editTask)
+        const objectiveId = await pool.query(`SELECT objectives.id FROM objectives INNER JOIN active_objective ON objectives.id = active_objective.objective_id WHERE user_email = $1`, [userEmail])
+        let { id } = objectiveId.rows[0]
+        const editObjective = await pool.query('UPDATE objectives SET current_points = current_points + $1 WHERE id = $2', [points,id])
+        res.json(editObjective)
     }catch(err){
         console.error(err)
     }
