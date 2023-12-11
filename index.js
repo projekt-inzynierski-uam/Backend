@@ -211,6 +211,11 @@ app.get('/activeobjective/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
+        const isActiveObjectiveExist = await pool.query(`SELECT EXISTS(SELECT * FROM active_objective WHERE user_email = $1)`, [userEmail])
+        let { exists } = isActiveObjectiveExist.rows[0]
+        if(!exists){
+            const createActiveObjective = await pool.query(`INSERT INTO active_objective (objective_id, user_email) VALUES ('test', $1)`, [userEmail])
+        }
         const getActiveObjectives = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM objectives INNER JOIN active_objective ON objectives.id = active_objective.objective_id WHERE user_email = $1`, [userEmail])
         res.json(getActiveObjectives.rows)
     } catch (err){
@@ -226,7 +231,8 @@ app.put('/editactiveobjective/:userEmail', async(req, res) => {
     try{
         const editActiveObjective = await pool.query('UPDATE active_objective SET objective_id = $1 WHERE user_email = $2', [id, userEmail])
         res.json(editActiveObjective)
-    }catch(err){
+    }
+    catch(err){
         console.error(err)
     }
 })
