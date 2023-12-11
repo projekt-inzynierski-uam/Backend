@@ -186,8 +186,8 @@ app.get('/activeobjective/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const groups = await pool.query(`SELECT objectives.id, objectives.max_points, objectives.current_points FROM active_objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1`, [userEmail])
-        res.json(groups.rows)
+        const getActiveObjectives = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM objectives INNER JOIN active_objective ON objectives.id = active_objective.objective_id WHERE user_email = $1`, [userEmail])
+        res.json(getActiveObjectives.rows)
     } catch (err){
         console.error(err)
     }
@@ -195,11 +195,11 @@ app.get('/activeobjective/:userEmail', async (req, res) => {
 
 //edit active objective
 
-app.put('/editactiveobjective/:objectiveid', async(req, res) => {
-    const {objectiveid} = req.params
-    const {userEmail} = req.body
+app.put('/editactiveobjective/:userEmail', async(req, res) => {
+    const {userEmail} = req.params
+    const {id} = req.body
     try{
-        const editActiveObjective = await pool.query('UPDATE active_objective SET objective.id = $1 WHERE user_email = $2', [objectiveid, userEmail])
+        const editActiveObjective = await pool.query('UPDATE active_objective SET objective_id = $1 WHERE user_email = $2', [id, userEmail])
         res.json(editActiveObjective)
     }catch(err){
         console.error(err)
@@ -212,7 +212,7 @@ app.get('/unfinishedobjectives/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const groups = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1 AND objectives.current_points < objectives.max_points`, [userEmail])
+        const groups = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1 AND isFinished = 'no' `, [userEmail])
         res.json(groups.rows)
     } catch (err){
         console.error(err)
@@ -225,7 +225,7 @@ app.get('/finishedobjectives/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const groups = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1 AND objectives.current_points >= objectives.max_points`, [userEmail])
+        const groups = await pool.query(`SELECT objectives.id, objectives.title, objectives.max_points, objectives.current_points FROM objectives INNER JOIN users_objectives_connection ON objectives.id = users_objectives_connection.objective_id INNER JOIN users ON users.email = users_objectives_connection.user_email WHERE user_email = $1 AND isFinished = 'yes' `, [userEmail])
         res.json(groups.rows)
     } catch (err){
         console.error(err)
@@ -237,7 +237,7 @@ app.post('/createobjective', async (req, res) => {
     const {title, min_points, max_points, email} = req.body
     const id = v4()
     try{
-        const newObjective = await pool.query(`INSERT INTO objectives (id, title, min_points, max_points, current_points) VALUES ($1, $2, $3, $4, $3)`, [id,title, min_points, max_points])
+        const newObjective = await pool.query(`INSERT INTO objectives (id, title, min_points, max_points, current_points, isFinished) VALUES ($1, $2, $3, $4, $3, 'false')`, [id,title, min_points, max_points])
         const newConnection = await pool.query(`INSERT INTO users_objectives_connection (objective_id, user_email) VALUES ($1, $2)`, [id, email])
         res.json(newObjective)
         res.json(newConnection)
@@ -259,7 +259,18 @@ app.put('/editobjective/:objectiveid', async(req, res) => {
     }
 })
 
-//delete objective
+//edit unfinished to finished objective
+app.put('/editobjectivetofinished/:objectiveid', async(req, res) => {
+    const {objectiveid} = req.params
+    try{
+        const editObjective = await pool.query(`UPDATE objectives SET isFinished = 'yes' WHERE id = $1`, [objectiveid])
+        res.json(editObjective)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//delete finished objective
 app.delete('/deleteobjective/:objectiveid', async(req, res) => {
     const {objectiveid} = req.params
     try{
