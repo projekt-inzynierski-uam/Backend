@@ -19,26 +19,37 @@ app.use(express.json())
 
 //TODOS
 
-//get all todos
-app.get('/todos/:userEmail', async (req, res) => {
+//get all tasks
+app.get('/gettasks/:userEmail', async (req, res) => {
     
     const { userEmail } = req.params;
     
     try {
-        const todos = await pool.query('SELECT * FROM todos WHERE assigned = $1', [userEmail])
-        res.json(todos.rows)
+        const tasks = await pool.query('SELECT * FROM todos WHERE assigned = $1', [userEmail])
+        res.json(tasks.rows)
     } catch (err){
         console.error(err)
     }
 })
 
-//create a new todo
-app.post('/todos', async (req, res) => {
-    const {assigned, title} = req.body
-    const id = v4()
+//finishtask
+app.put('/finishtask/:userEmail', async(req, res) => {
+    const {userEmail} = req.params
+    const {points} = req.body
     try{
-        const newToDo = await pool.query(`INSERT INTO todos(id, assigned, title) VALUES ($1, $2, $3)`, [id, assigned, title])
-        res.json(newToDo)
+        const editTask = await pool.query('UPDATE objectives SET current_points = current_points + $1 FROM active_objective WHERE user_email = $2', [points,userEmail])
+        res.json(editTask)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//delete task
+app.delete('/deletetask/:taskId', async(req, res) => {
+    const {taskId} = req.params
+    try{
+        const deleteTask = await pool.query('DELETE FROM todos WHERE id = $1', [taskId])
+        res.json(deleteTask)
     }catch(err){
         console.error(err)
     }
@@ -46,10 +57,13 @@ app.post('/todos', async (req, res) => {
 
 //create a new task
 app.post('/createtask', async (req, res) => {
-    const {title, email, datestart, dateend} = req.body
+    const {title, email, points, dateend} = req.body
     const id = v4()
+    let d = new Date(dateend) 
+    d.setTime( d.getTime() + 3600000 )
     try{
-        console.log(title, email, datestart, dateend)
+        const newTask = await pool.query(`INSERT INTO todos(id, assigned, title, finish_date, points) VALUES ($1, $2, $3, $4, $5)`, [id, email, title, d, points])
+        res.json(newTask)
     }catch(err){
         console.error(err)
     }
