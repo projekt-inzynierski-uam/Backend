@@ -69,6 +69,17 @@ app.post('/createtask', async (req, res) => {
     }
 })
 
+//create a new task
+app.post('/createtask', async (req, res) => {
+    const {title, email, datestart, dateend} = req.body
+    const id = v4()
+    try{
+        console.log(title, email, datestart, dateend)
+    }catch(err){
+        console.error(err)
+    }
+})
+
 //edit a todo
 app.put('/todos/:id', async(req, res) => {
     const {id} = req.params
