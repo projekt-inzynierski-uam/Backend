@@ -29,7 +29,8 @@ CREATE TABLE objectives (
     title VARCHAR(25),
     min_points INTEGER,
     max_points INTEGER,
-    current_points INTEGER
+    current_points INTEGER,
+    isFinished BOOLEAN
 );
 
 CREATE TABLE users_objectives_connection (
