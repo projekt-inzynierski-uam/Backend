@@ -4,8 +4,8 @@ CREATE TABLE todos (
     id VARCHAR(255) PRIMARY KEY,
     assigned VARCHAR(255),
     title VARCHAR(30),
-    startdate DATE NOT NULL,
-    finishdate DATE NOT NULL
+    finish_date DATE NOT NULL,
+    points INTEGER
 );
 
 CREATE TABLE users (
@@ -29,7 +29,8 @@ CREATE TABLE objectives (
     title VARCHAR(25),
     min_points INTEGER,
     max_points INTEGER,
-    current_points INTEGER
+    current_points INTEGER,
+    isFinished BOOLEAN
 );
 
 CREATE TABLE users_objectives_connection (
