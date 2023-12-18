@@ -44,3 +44,10 @@ CREATE TABLE active_objective (
     objective_id VARCHAR(255) REFERENCES objectives (id),
     user_email VARCHAR(255) REFERENCES users (email)
 );
+
+CREATE TABLE Invites (
+    id SERIAL PRIMARY KEY,
+    user_email VARCHAR(255) REFERENCES users (email),
+    group_id VARCHAR(255) REFERENCES groups (id)
+);
+
