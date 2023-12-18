@@ -109,11 +109,11 @@ app.delete('/todos/:id', async(req, res) => {
 
 //create a new group
 app.post('/group', async (req, res) => {
-    const {group_name, user_email} = req.body
+    const {group_name, email} = req.body
     const id = v4()
     try{
         const newGroup = await pool.query(`INSERT INTO groups(id, name) VALUES ($1, $2)`, [id, group_name])
-        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
+        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, email])
         res.json(newGroup)
         res.json(addGroupOwner)
     }catch(err){
@@ -123,12 +123,10 @@ app.post('/group', async (req, res) => {
 
 //join to group
 app.post('/groupjoin', async (req, res) => {
-    const {group_name, user_email} = req.body
-    const group_id = await pool.query(`SELECT id FROM groups WHERE name = $1`, [group_name])
-    const {id} = group_id.rows[0]
+    const {groupId, email} = req.body
     try{
-        const addGroupMember = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, user_email])
-        res.json(addGroupMember)
+        const addInvite = await pool.query(`INSERT INTO invites(user_email, group_id) VALUES ($1, $2)`, [email, groupId])
+        res.json(addInvite)
     }catch(err){
         console.error(err)
     }
@@ -138,7 +136,6 @@ app.post('/groupjoin', async (req, res) => {
 app.get('/groups/:userEmail', async (req, res) => {
 
     const { userEmail } = req.params;
-    
     try {
         const groups = await pool.query(`SELECT DISTINCT groups.id, groups.name FROM groups INNER JOIN user_in_groups ON groups.id = user_in_groups.group_id INNER JOIN users ON users.email = user_in_groups.user_email WHERE user_email = $1`, [userEmail])
         res.json(groups.rows)
@@ -147,14 +144,79 @@ app.get('/groups/:userEmail', async (req, res) => {
     }
 })
 
+//get all user in group
+app.get('/groupusers/:groupId', async (req, res) => {
+
+    const { groupId } = req.params;
+    try {
+        const groups = await pool.query(`SELECT DISTINCT users.email FROM users INNER JOIN user_in_groups ON users.email = user_in_groups.user_email INNER JOIN groups ON groups.id = user_in_groups.group_id WHERE groups.id = $1`, [groupId])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
 //delete a group
-app.delete('/groups/:groupID', async(req, res) => {
+app.delete('/deletegroup/:groupID', async(req, res) => {
     const {groupID} = req.params
     try{
         const deleteFromGroupConnects = await pool.query('DELETE from user_in_groups WHERE group_id = $1', [groupID])
+        const deleteFromInvites = await pool.query('DELETE from invites WHERE group_id = $1', [groupID])
         const deleteFromGroup = await pool.query('DELETE FROM groups WHERE id = $1', [groupID])
-        res.json(deleteFromGroupConnects)
         res.json(deleteFromGroup)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//remove user
+app.delete('/removeuser/', async(req, res) => {
+    const {groupId, email} = req.body
+    try{
+        const deleteFromGroupConnects = await pool.query('DELETE from user_in_groups WHERE group_id = $1 AND user_email = $2', [groupId, email])
+        res.json(deleteFromGroupConnects)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+
+//INVITES
+
+//get invites
+
+app.get('/invites/:userEmail', async (req, res) => {
+
+    const { userEmail } = req.params;
+    try {
+        const invites = await pool.query(`SELECT DISTINCT groups.id, groups.name FROM groups INNER JOIN invites ON groups.id = invites.group_id INNER JOIN users ON users.email = invites.user_email WHERE invites.user_email = $1`, [userEmail])
+        res.json(invites.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//accept invite
+
+//join to group
+app.put('/acceptinvite', async (req, res) => {
+    const {groupId, email} = req.body
+    try{
+        const removeInvite = await pool.query(`DELETE FROM invites WHERE user_email = $1 AND group_id = $2`,[email, groupId])
+        const addMember = await pool.query(`INSERT INTO user_in_groups(user_email, group_id) VALUES ($1, $2)`, [email, groupId])
+        res.json(addMember)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//decline invite
+
+app.delete('/declineinvite', async (req, res) => {
+    const {groupId, email} = req.body
+    try{
+        const removeInvite = await pool.query(`DELETE FROM invites WHERE user_email = $1 AND group_id = $2`,[email, groupId])
+        res.json(removeInvite)
     }catch(err){
         console.error(err)
     }
