@@ -169,6 +169,18 @@ app.delete('/groups/:groupID', async(req, res) => {
     }
 })
 
+//remove user
+app.delete('/removeuser/', async(req, res) => {
+    const {groupId, email} = req.body
+    try{
+        const deleteFromGroupConnects = await pool.query('DELETE from user_in_groups WHERE group_id = $1 AND user_email = $2', [groupId, email])
+        res.json(deleteFromGroupConnects)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+
 //INVITES
 
 //get invites
