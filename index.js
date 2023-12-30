@@ -252,17 +252,16 @@ app.post('/login', async (req, res) =>{
     try{
         const users = await pool.query('SELECT * FROM users WHERE email = $1',[email])
 
-        if(!users.rows.length) return res.json({detail: 'Użytkownik nie istnieje'})
-
         const success = await bcrypt.compare(password, users.rows[0].hashed_password)
         const token = jwt.sign({email}, 'secret', {expiresIn:'1hr'})
 
         if(success) {
             res.json({'email': users.rows[0].email, token})
         }else{
-            res.json({detail: "Nie udało się zalogować"})
+            res.status(400).send(new Error('Bledny login'))
         }
     }catch(err){
+        res.status(400).send(new Error('Bledny login'))
         console.error(err)
     }
 })
