@@ -25,7 +25,7 @@ app.get('/gettasks/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const tasks = await pool.query('SELECT * FROM todos WHERE assigned = $1', [userEmail])
+        const tasks = await pool.query(`SELECT id, title, EXTRACT(YEAR FROM finish_date) AS year, EXTRACT(MONTH FROM finish_date) AS month, EXTRACT(DAY FROM finish_date) AS day, points FROM todos WHERE assigned = $1`, [userEmail])
         res.json(tasks.rows)
     } catch (err){
         console.error(err)
@@ -103,6 +103,13 @@ app.delete('/todos/:id', async(req, res) => {
     }catch(err){
         console.error(err)
     }
+})
+
+app.post('/dates', async (req, res) => {
+    
+    const { dates } = req.body
+    
+    console.log(dates)
 })
 
 //GROUPS
