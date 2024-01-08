@@ -32,6 +32,33 @@ app.get('/gettasks/:userEmail', async (req, res) => {
     }
 })
 
+//get all tasks group
+app.get('/gettasksgroup', async (req, res) => {
+
+    const {userEmail, groupId} = req.body
+    
+    try {
+        const tasks = await pool.query(`SELECT id, title, EXTRACT(YEAR FROM finish_date) AS year, EXTRACT(MONTH FROM finish_date) AS month, EXTRACT(DAY FROM finish_date) AS day, points FROM todos_groups WHERE assigned = $1 AND group_id = $2`, [userEmail, groupId])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//create a new task group
+app.post('/createtaskgroup', async (req, res) => {
+    const {title, email, points, dateend, groupId} = req.body
+    const id = v4()
+    let d = new Date(dateend) 
+    d.setTime( d.getTime() + 3600000 )
+    try{
+        const newTask = await pool.query(`INSERT INTO todos_groups(id, assigned, title, finish_date, points,group_id) VALUES ($1, $2, $3, $4, $5, $6)`, [id, email, title, d, points,groupId])
+        res.json(newTask)
+    }catch(err){
+        console.error(err)
+    }
+})
+
 //finishtask
 app.put('/finishtask/:userEmail', async(req, res) => {
     const {userEmail} = req.params
