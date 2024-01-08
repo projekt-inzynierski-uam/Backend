@@ -8,6 +8,15 @@ CREATE TABLE todos (
     points INTEGER
 );
 
+CREATE TABLE todos_groups (
+    id VARCHAR(255) PRIMARY KEY,
+    assigned VARCHAR(255),
+    title VARCHAR(30),
+    finish_date DATE NOT NULL,
+    points INTEGER,
+    group_id VARCHAR(255) REFERENCES groups (id)
+);
+
 CREATE TABLE users (
     email VARCHAR(255) PRIMARY KEY,
     hashed_password VARCHAR(255)
@@ -31,6 +40,17 @@ CREATE TABLE objectives (
     max_points INTEGER,
     current_points INTEGER,
     isFinished BOOLEAN
+);
+
+CREATE TABLE objectives_groups (
+    id VARCHAR(255) PRIMARY KEY,
+    title VARCHAR(25),
+    assigned VARCHAR(255),
+    min_points INTEGER,
+    max_points INTEGER,
+    current_points INTEGER,
+    isFinished BOOLEAN,
+    group_id VARCHAR(255) REFERENCES groups (id)
 );
 
 CREATE TABLE users_objectives_connection (

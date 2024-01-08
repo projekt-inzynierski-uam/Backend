@@ -25,9 +25,36 @@ app.get('/gettasks/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const tasks = await pool.query('SELECT * FROM todos WHERE assigned = $1', [userEmail])
+        const tasks = await pool.query(`SELECT id, title, EXTRACT(YEAR FROM finish_date) AS year, EXTRACT(MONTH FROM finish_date) AS month, EXTRACT(DAY FROM finish_date) AS day, points FROM todos WHERE assigned = $1`, [userEmail])
         res.json(tasks.rows)
     } catch (err){
+        console.error(err)
+    }
+})
+
+//get all tasks group
+app.get('/gettasksgroup', async (req, res) => {
+
+    const {userEmail, groupId} = req.body
+    
+    try {
+        const tasks = await pool.query(`SELECT id, title, EXTRACT(YEAR FROM finish_date) AS year, EXTRACT(MONTH FROM finish_date) AS month, EXTRACT(DAY FROM finish_date) AS day, points FROM todos_groups WHERE assigned = $1 AND group_id = $2`, [userEmail, groupId])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//create a new task group
+app.post('/createtaskgroup', async (req, res) => {
+    const {title, email, points, dateend, groupId} = req.body
+    const id = v4()
+    let d = new Date(dateend) 
+    d.setTime( d.getTime() + 3600000 )
+    try{
+        const newTask = await pool.query(`INSERT INTO todos_groups(id, assigned, title, finish_date, points,group_id) VALUES ($1, $2, $3, $4, $5, $6)`, [id, email, title, d, points,groupId])
+        res.json(newTask)
+    }catch(err){
         console.error(err)
     }
 })
@@ -103,6 +130,13 @@ app.delete('/todos/:id', async(req, res) => {
     }catch(err){
         console.error(err)
     }
+})
+
+app.post('/dates', async (req, res) => {
+    
+    const { dates } = req.body
+    
+    console.log(dates)
 })
 
 //GROUPS
@@ -252,17 +286,16 @@ app.post('/login', async (req, res) =>{
     try{
         const users = await pool.query('SELECT * FROM users WHERE email = $1',[email])
 
-        if(!users.rows.length) return res.json({detail: 'Użytkownik nie istnieje'})
-
         const success = await bcrypt.compare(password, users.rows[0].hashed_password)
         const token = jwt.sign({email}, 'secret', {expiresIn:'1hr'})
 
         if(success) {
             res.json({'email': users.rows[0].email, token})
         }else{
-            res.json({detail: "Nie udało się zalogować"})
+            res.status(400).send(new Error('Bledny login'))
         }
     }catch(err){
+        res.status(400).send(new Error('Bledny login'))
         console.error(err)
     }
 })
@@ -327,6 +360,32 @@ app.get('/finishedobjectives/:userEmail', async (req, res) => {
     }
 })
 
+//get unfinished objectives group
+app.get('/unfinishedobjectivesgroup/:groupId', async (req, res) => {
+
+    const { groupId } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT id, title, max_points, current_points FROM objectives_groups  WHERE group_id = $1 AND isFinished = 'no'`, [groupId])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get finished objectives group
+app.get('/finishedobjectivesgroup/:groupId', async (req, res) => {
+
+    const { groupId } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT id, title, max_points, current_points FROM objectives_groups WHERE group_id = $1 AND isFinished = 'yes'`, [groupId])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
 //create objective
 app.post('/createobjective', async (req, res) => {
     const {title, min_points, max_points, email} = req.body
@@ -334,6 +393,19 @@ app.post('/createobjective', async (req, res) => {
     try{
         const newObjective = await pool.query(`INSERT INTO objectives (id, title, min_points, max_points, current_points, isFinished) VALUES ($1, $2, $3, $4, $3, 'false')`, [id,title, min_points, max_points])
         const newConnection = await pool.query(`INSERT INTO users_objectives_connection (objective_id, user_email) VALUES ($1, $2)`, [id, email])
+        res.json(newObjective)
+        res.json(newConnection)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//create objective
+app.post('/createobjectivegroup', async (req, res) => {
+    const {title, min_points, max_points, groupId} = req.body
+    const id = v4()
+    try{
+        const newObjective = await pool.query(`INSERT INTO objectives_groups (id, title, min_points, max_points, current_points, isFinished, group_id) VALUES ($1, $2, $3, $4, $3, 'false', $5)`, [id,title, min_points, max_points, groupId])
         res.json(newObjective)
         res.json(newConnection)
     }catch(err){
