@@ -360,6 +360,32 @@ app.get('/finishedobjectives/:userEmail', async (req, res) => {
     }
 })
 
+//get unfinished objectives group
+app.get('/unfinishedobjectivesgroup/:groupId', async (req, res) => {
+
+    const { groupId } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT id, title, max_points, current_points FROM objectives_groups  WHERE group_id = $1 AND isFinished = 'no'`, [groupId])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get finished objectives group
+app.get('/finishedobjectivesgroup/:groupId', async (req, res) => {
+
+    const { groupId } = req.params;
+    
+    try {
+        const groups = await pool.query(`SELECT id, title, max_points, current_points FROM objectives_groups WHERE group_id = $1 AND isFinished = 'yes'`, [groupId])
+        res.json(groups.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
 //create objective
 app.post('/createobjective', async (req, res) => {
     const {title, min_points, max_points, email} = req.body
@@ -367,6 +393,19 @@ app.post('/createobjective', async (req, res) => {
     try{
         const newObjective = await pool.query(`INSERT INTO objectives (id, title, min_points, max_points, current_points, isFinished) VALUES ($1, $2, $3, $4, $3, 'false')`, [id,title, min_points, max_points])
         const newConnection = await pool.query(`INSERT INTO users_objectives_connection (objective_id, user_email) VALUES ($1, $2)`, [id, email])
+        res.json(newObjective)
+        res.json(newConnection)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//create objective
+app.post('/createobjectivegroup', async (req, res) => {
+    const {title, min_points, max_points, groupId} = req.body
+    const id = v4()
+    try{
+        const newObjective = await pool.query(`INSERT INTO objectives_groups (id, title, min_points, max_points, current_points, isFinished, group_id) VALUES ($1, $2, $3, $4, $3, 'false', $5)`, [id,title, min_points, max_points, groupId])
         res.json(newObjective)
         res.json(newConnection)
     }catch(err){

@@ -42,6 +42,17 @@ CREATE TABLE objectives (
     isFinished BOOLEAN
 );
 
+CREATE TABLE objectives_groups (
+    id VARCHAR(255) PRIMARY KEY,
+    title VARCHAR(25),
+    assigned VARCHAR(255),
+    min_points INTEGER,
+    max_points INTEGER,
+    current_points INTEGER,
+    isFinished BOOLEAN,
+    group_id VARCHAR(255) REFERENCES groups (id)
+);
+
 CREATE TABLE users_objectives_connection (
     id SERIAL PRIMARY KEY,
     objective_id VARCHAR(255) REFERENCES objectives (id),
