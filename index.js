@@ -265,8 +265,7 @@ app.post('/signup', async (req, res) =>{
     const salt = bcrypt.genSaltSync(10)
     const hashedPassword = bcrypt.hashSync(password, salt)
     try{
-        const signUp = await pool.query('INSERT INTO users (email, hashed_password) VALUES ($1, $2)',
-        [email, hashedPassword])
+        const signUp = await pool.query('INSERT INTO users (email, hashed_password) VALUES ($1, $2)',[email, hashedPassword])
 
         const token = jwt.sign({email}, 'secret', {expiresIn:'1hr'})
 
@@ -292,10 +291,10 @@ app.post('/login', async (req, res) =>{
         if(success) {
             res.json({'email': users.rows[0].email, token})
         }else{
-            res.status(400).send(new Error('Bledny login'))
+            res.status(400).send(new Error('Niepoprawne dane'))
         }
     }catch(err){
-        res.status(400).send(new Error('Bledny login'))
+        res.status(400).send(new Error('Niepoprawne dane'))
         console.error(err)
     }
 })
