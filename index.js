@@ -449,6 +449,18 @@ app.delete('/deleteobjective/:objectiveid', async(req, res) => {
     }
 })
 
+//change group name
+app.put('/changegroupname/:groupId', async(req, res) => {
+    const { groupId } = req.params
+    const { groupName } = req.body
+    try{
+        const changeGroupName = await pool.query('UPDATE groups SET name = $1 WHERE id = $2', [groupName, groupId])
+        res.json(changeGroupName)
+    }catch(err){
+        console.err(err)
+    }
+})
+
 app.listen(PORT, () => 
     console.log(`Server running on port ${PORT}`)
 )
