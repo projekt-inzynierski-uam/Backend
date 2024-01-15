@@ -25,20 +25,48 @@ app.get('/gettasks/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const tasks = await pool.query(`SELECT id, title, EXTRACT(YEAR FROM finish_date) AS year, EXTRACT(MONTH FROM finish_date) AS month, EXTRACT(DAY FROM finish_date) AS day, points FROM todos WHERE assigned = $1`, [userEmail])
+        const tasks = await pool.query(`SELECT id, title, year_date AS year, month_date AS month, day_date AS day, points FROM todos WHERE assigned = $1`, [userEmail])
         res.json(tasks.rows)
     } catch (err){
         console.error(err)
     }
 })
 
-//get all tasks group
-app.get('/gettasksgroup', async (req, res) => {
+//get all tasks today
+app.get('/gettaskstoday/:userEmail', async (req, res) => {
+    
+    const { userEmail } = req.params;
+    let d = new Date()
+    d.setTime( d.getTime() + 3600000 )
+    let todayday = d.getDate()
+    try {
+        const tasks = await pool.query(`SELECT id, title, year_date AS year, month_date AS month, day_date AS day, points FROM todos WHERE assigned = $1 AND day_date = $2`, [userEmail, todayday])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get all tasks group single user
+app.post('/gettasksgroupuser', async (req, res) => {
 
     const {userEmail, groupId} = req.body
     
     try {
-        const tasks = await pool.query(`SELECT id, title, EXTRACT(YEAR FROM finish_date) AS year, EXTRACT(MONTH FROM finish_date) AS month, EXTRACT(DAY FROM finish_date) AS day, points FROM todos_groups WHERE assigned = $1 AND group_id = $2`, [userEmail, groupId])
+        const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned FROM todos_groups WHERE assignedto = $1 AND group_id = $2`, [userEmail, groupId])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get all tasks group from all users
+app.get('/gettasksgroupallusers/:groupId', async (req, res) => {
+
+    const {groupId} = req.params
+    
+    try {
+        const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned, assignedto FROM todos_groups WHERE group_id = $1`, [groupId])
         res.json(tasks.rows)
     } catch (err){
         console.error(err)
@@ -47,12 +75,15 @@ app.get('/gettasksgroup', async (req, res) => {
 
 //create a new task group
 app.post('/createtaskgroup', async (req, res) => {
-    const {title, email, points, dateend, groupId} = req.body
+    const {title, userEmail, points, dateend, groupId, targetEmail} = req.body
     const id = v4()
     let d = new Date(dateend) 
     d.setTime( d.getTime() + 3600000 )
     try{
-        const newTask = await pool.query(`INSERT INTO todos_groups(id, assigned, title, finish_date, points,group_id) VALUES ($1, $2, $3, $4, $5, $6)`, [id, email, title, d, points,groupId])
+        const day = d.getDate()
+        const month = d.getMonth() + 1
+        const year = d.getFullYear()
+        const newTask = await pool.query(`INSERT INTO todos_groups(id, whoassigned, title, day_date, month_date, year_date, points, s_date, group_id, assignedto) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, [id, userEmail, title, day, month, year, points, d, groupId, targetEmail])
         res.json(newTask)
     }catch(err){
         console.error(err)
@@ -84,15 +115,13 @@ app.delete('/deletetask/:taskId', async(req, res) => {
     }
 })
 
-//create a new task
-app.post('/createtask', async (req, res) => {
-    const {title, email, points, dateend} = req.body
-    const id = v4()
-    let d = new Date(dateend) 
-    d.setTime( d.getTime() + 3600000 )
+//delete task group
+app.delete('/deletetaskgroup/:taskId', async(req, res) => {
+    const {taskId} = req.params
+    console.log(taskId)
     try{
-        const newTask = await pool.query(`INSERT INTO todos(id, assigned, title, finish_date, points) VALUES ($1, $2, $3, $4, $5)`, [id, email, title, d, points])
-        res.json(newTask)
+        const deleteTask = await pool.query('DELETE FROM todos_groups WHERE id = $1', [taskId])
+        res.json(deleteTask)
     }catch(err){
         console.error(err)
     }
@@ -100,10 +129,16 @@ app.post('/createtask', async (req, res) => {
 
 //create a new task
 app.post('/createtask', async (req, res) => {
-    const {title, email, datestart, dateend} = req.body
+    const {title, email, points, dateend} = req.body
     const id = v4()
+    let d = new Date(dateend) 
+    d.setTime( d.getTime() + 3600000 )
     try{
-        console.log(title, email, datestart, dateend)
+        const day = d.getDate()
+        const month = d.getMonth() + 1
+        const year = d.getFullYear()
+        const newTask = await pool.query(`INSERT INTO todos(id, assigned, title, day_date, month_date, year_date, points, s_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [id, email, title, day, month, year, points, d])
+        res.json(newTask)
     }catch(err){
         console.error(err)
     }
@@ -132,12 +167,65 @@ app.delete('/todos/:id', async(req, res) => {
     }
 })
 
-app.post('/dates', async (req, res) => {
+//get specific dates tasks
+app.post('/dates/:userEmail', async (req, res) => {
     
+    const { userEmail } = req.params
     const { dates } = req.body
-    
-    console.log(dates)
+    const fixed_dates = []
+    dates.forEach(date => {
+        let d = new Date(date) 
+        d.setTime( d.getTime() + 3600000 )
+        fixed_dates.push(d)
+    });
+    try{
+        const specificTasks = await pool.query(`SELECT id, title, year_date AS year, month_date AS month, day_date AS day, points FROM todos WHERE assigned = $1 AND s_date = ANY ($2)`, [userEmail, fixed_dates])
+        res.json(specificTasks.rows)
+    }catch(err){
+        console.error(err)
+    }
 })
+
+//get specific dates tasks groups all
+app.post('/datesgroupsall/:groupId', async (req, res) => {
+    
+    const { groupId } = req.params
+    const { dates} = req.body
+    const fixed_dates = []
+    dates.forEach(date => {
+        let d = new Date(date) 
+        d.setTime( d.getTime() + 3600000 )
+        fixed_dates.push(d)
+    });
+    fixed_dates.sort()
+    try{
+        const specificTasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned, assignedto FROM todos_groups WHERE group_id = $1 AND s_date = ANY ($2)`, [groupId, fixed_dates])
+        res.json(specificTasks.rows)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//get specific dates tasks groups single
+app.post('/datesgroupssingle/:userEmail', async (req, res) => {
+    
+    const { userEmail } = req.params
+    const { dates, groupId } = req.body
+    const fixed_dates = []
+    dates.forEach(date => {
+        let d = new Date(date) 
+        d.setTime( d.getTime() + 3600000 )
+        fixed_dates.push(d)
+    });
+    fixed_dates.sort()
+    try{
+        const specificTasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned FROM todos_groups WHERE assignedto = $1 AND s_date = ANY ($2) AND group_id = $3`, [userEmail, fixed_dates, groupId])
+        res.json(specificTasks.rows)
+    }catch(err){
+        console.error(err)
+    }
+})
+
 
 //GROUPS
 
@@ -147,7 +235,7 @@ app.post('/group', async (req, res) => {
     const id = v4()
     try{
         const newGroup = await pool.query(`INSERT INTO groups(id, name) VALUES ($1, $2)`, [id, group_name])
-        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, email])
+        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email, isAdmin) VALUES ($1, $2, true)`, [id, email])
         res.json(newGroup)
         res.json(addGroupOwner)
     }catch(err){
@@ -183,7 +271,7 @@ app.get('/groupusers/:groupId', async (req, res) => {
 
     const { groupId } = req.params;
     try {
-        const groups = await pool.query(`SELECT DISTINCT users.email FROM users INNER JOIN user_in_groups ON users.email = user_in_groups.user_email INNER JOIN groups ON groups.id = user_in_groups.group_id WHERE groups.id = $1`, [groupId])
+        const groups = await pool.query(`SELECT DISTINCT user_email, isadmin FROM user_in_groups WHERE group_id = $1`, [groupId])
         res.json(groups.rows)
     } catch (err){
         console.error(err)
@@ -237,7 +325,7 @@ app.put('/acceptinvite', async (req, res) => {
     const {groupId, email} = req.body
     try{
         const removeInvite = await pool.query(`DELETE FROM invites WHERE user_email = $1 AND group_id = $2`,[email, groupId])
-        const addMember = await pool.query(`INSERT INTO user_in_groups(user_email, group_id) VALUES ($1, $2)`, [email, groupId])
+        const addMember = await pool.query(`INSERT INTO user_in_groups(user_email, group_id, isAdmin) VALUES ($1, $2, false)`, [email, groupId])
         res.json(addMember)
     }catch(err){
         console.error(err)
@@ -265,8 +353,7 @@ app.post('/signup', async (req, res) =>{
     const salt = bcrypt.genSaltSync(10)
     const hashedPassword = bcrypt.hashSync(password, salt)
     try{
-        const signUp = await pool.query('INSERT INTO users (email, hashed_password) VALUES ($1, $2)',
-        [email, hashedPassword])
+        const signUp = await pool.query('INSERT INTO users (email, hashed_password) VALUES ($1, $2)',[email, hashedPassword])
 
         const token = jwt.sign({email}, 'secret', {expiresIn:'1hr'})
 
@@ -292,10 +379,10 @@ app.post('/login', async (req, res) =>{
         if(success) {
             res.json({'email': users.rows[0].email, token})
         }else{
-            res.status(400).send(new Error('Bledny login'))
+            res.status(400).send(new Error('Niepoprawne dane'))
         }
     }catch(err){
-        res.status(400).send(new Error('Bledny login'))
+        res.status(400).send(new Error('Niepoprawne dane'))
         console.error(err)
     }
 })
@@ -445,6 +532,30 @@ app.delete('/deleteobjective/:objectiveid', async(req, res) => {
         const deleteObjective = await pool.query('DELETE FROM objectives WHERE id = $1', [objectiveid])
         res.json(deleteObjectiveConnection)
         res.json(deleteObjective)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//change group name
+app.put('/changegroupname/:groupId', async(req, res) => {
+    const { groupId } = req.params
+    const { groupName } = req.body
+    try{
+        const changeGroupName = await pool.query('UPDATE groups SET name = $1 WHERE id = $2', [groupName, groupId])
+        res.json(changeGroupName)
+    }catch(err){
+        console.err(err)
+    }
+})
+
+//get permision group
+app.post('/getpermission/:userEmail', async (req, res) => {
+    const { userEmail } = req.params
+    const { groupId } = req.body
+    try{
+        const getPermission = await pool.query(`SELECT isAdmin from user_in_groups WHERE user_email = $1 AND group_id = $2`, [userEmail, groupId])
+        res.json(getPermission.rows[0].isadmin)
     }catch(err){
         console.error(err)
     }
