@@ -47,6 +47,35 @@ app.get('/gettaskstoday/:userEmail', async (req, res) => {
     }
 })
 
+//get all tasks today
+app.get('/gettasksincoming/:userEmail', async (req, res) => {
+    
+    const { userEmail } = req.params;
+    let d = new Date()
+    d.setTime( d.getTime() + 3600000 )
+    let todayday = d.getDate()
+    try {
+        const tasks = await pool.query(`SELECT id, title, year_date AS year, month_date AS month, day_date AS day, points FROM todos WHERE assigned = $1 AND day_date > $2 LIMIT 10`, [userEmail, todayday])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get groupname
+app.get('/getgroupname/:groupId', async (req, res) => {
+    
+    const { groupId } = req.params;
+    
+    try {
+        const groupName = await pool.query(`SELECT name FROM groups WHERE id = $1`, [groupId])
+        res.json(groupName.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+
 //get all tasks group single user
 app.post('/gettasksgroupuser', async (req, res) => {
 
@@ -118,7 +147,6 @@ app.delete('/deletetask/:taskId', async(req, res) => {
 //delete task group
 app.delete('/deletetaskgroup/:taskId', async(req, res) => {
     const {taskId} = req.params
-    console.log(taskId)
     try{
         const deleteTask = await pool.query('DELETE FROM todos_groups WHERE id = $1', [taskId])
         res.json(deleteTask)
