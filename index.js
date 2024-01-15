@@ -25,7 +25,22 @@ app.get('/gettasks/:userEmail', async (req, res) => {
     const { userEmail } = req.params;
     
     try {
-        const tasks = await pool.query(`SELECT id, title, EXTRACT(YEAR FROM finish_date) AS year, EXTRACT(MONTH FROM finish_date) AS month, EXTRACT(DAY FROM finish_date) AS day, points FROM todos WHERE assigned = $1`, [userEmail])
+        const tasks = await pool.query(`SELECT id, title, year_date AS year, month_date AS month, day_date AS day, points FROM todos WHERE assigned = $1`, [userEmail])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get all tasks today
+app.get('/gettaskstoday/:userEmail', async (req, res) => {
+    
+    const { userEmail } = req.params;
+    let d = new Date()
+    d.setTime( d.getTime() + 3600000 )
+    let todayday = d.getDate()
+    try {
+        const tasks = await pool.query(`SELECT id, title, year_date AS year, month_date AS month, day_date AS day, points FROM todos WHERE assigned = $1 AND day_date = $2`, [userEmail, todayday])
         res.json(tasks.rows)
     } catch (err){
         console.error(err)
@@ -91,19 +106,11 @@ app.post('/createtask', async (req, res) => {
     let d = new Date(dateend) 
     d.setTime( d.getTime() + 3600000 )
     try{
-        const newTask = await pool.query(`INSERT INTO todos(id, assigned, title, finish_date, points) VALUES ($1, $2, $3, $4, $5)`, [id, email, title, d, points])
+        const day = d.getDate()
+        const month = d.getMonth() + 1
+        const year = d.getFullYear()
+        const newTask = await pool.query(`INSERT INTO todos(id, assigned, title, day_date, month_date, year_date, points, s_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [id, email, title, day, month, year, points, d])
         res.json(newTask)
-    }catch(err){
-        console.error(err)
-    }
-})
-
-//create a new task
-app.post('/createtask', async (req, res) => {
-    const {title, email, datestart, dateend} = req.body
-    const id = v4()
-    try{
-        console.log(title, email, datestart, dateend)
     }catch(err){
         console.error(err)
     }
@@ -132,11 +139,24 @@ app.delete('/todos/:id', async(req, res) => {
     }
 })
 
-app.post('/dates', async (req, res) => {
+//get specific dates tasks
+app.post('/dates/:userEmail', async (req, res) => {
     
+    const { userEmail } = req.params
     const { dates } = req.body
-    
-    console.log(dates)
+    const fixed_dates = []
+    dates.forEach(date => {
+        let d = new Date(date) 
+        d.setTime( d.getTime() + 3600000 )
+        fixed_dates.push(d)
+    });
+    fixed_dates.sort()
+    try{
+        const specificTasks = await pool.query(`SELECT id, title, year_date AS year, month_date AS month, day_date AS day, points FROM todos WHERE assigned = $1 AND s_date BETWEEN $2 AND $3`, [userEmail, fixed_dates[0], fixed_dates[fixed_dates.length - 1]])
+        res.json(specificTasks.rows)
+    }catch(err){
+        console.error(err)
+    }
 })
 
 //GROUPS

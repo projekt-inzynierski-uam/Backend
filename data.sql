@@ -4,7 +4,10 @@ CREATE TABLE todos (
     id VARCHAR(255) PRIMARY KEY,
     assigned VARCHAR(255),
     title VARCHAR(30),
-    finish_date DATE NOT NULL,
+    day_date INTEGER,
+    month_date INTEGER,
+    year_date INTEGER,
+    s_date VARCHAR(255),
     points INTEGER
 );
 
