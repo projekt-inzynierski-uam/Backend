@@ -33,7 +33,8 @@ CREATE TABLE groups (
 CREATE TABLE user_in_groups (
     id SERIAL PRIMARY KEY,
     group_id VARCHAR(255) REFERENCES groups (id),
-    user_email VARCHAR(255) REFERENCES users (email)
+    user_email VARCHAR(255) REFERENCES users (email),
+    isAdmin BOOLEAN
 );
 
 CREATE TABLE objectives (

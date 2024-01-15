@@ -167,7 +167,7 @@ app.post('/group', async (req, res) => {
     const id = v4()
     try{
         const newGroup = await pool.query(`INSERT INTO groups(id, name) VALUES ($1, $2)`, [id, group_name])
-        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email) VALUES ($1, $2)`, [id, email])
+        const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email, isAdmin) VALUES ($1, $2, true)`, [id, email])
         res.json(newGroup)
         res.json(addGroupOwner)
     }catch(err){
@@ -203,7 +203,7 @@ app.get('/groupusers/:groupId', async (req, res) => {
 
     const { groupId } = req.params;
     try {
-        const groups = await pool.query(`SELECT DISTINCT users.email FROM users INNER JOIN user_in_groups ON users.email = user_in_groups.user_email INNER JOIN groups ON groups.id = user_in_groups.group_id WHERE groups.id = $1`, [groupId])
+        const groups = await pool.query(`SELECT DISTINCT user_email, isadmin FROM user_in_groups WHERE group_id = $1`, [groupId])
         res.json(groups.rows)
     } catch (err){
         console.error(err)
@@ -257,7 +257,7 @@ app.put('/acceptinvite', async (req, res) => {
     const {groupId, email} = req.body
     try{
         const removeInvite = await pool.query(`DELETE FROM invites WHERE user_email = $1 AND group_id = $2`,[email, groupId])
-        const addMember = await pool.query(`INSERT INTO user_in_groups(user_email, group_id) VALUES ($1, $2)`, [email, groupId])
+        const addMember = await pool.query(`INSERT INTO user_in_groups(user_email, group_id, isAdmin) VALUES ($1, $2, false)`, [email, groupId])
         res.json(addMember)
     }catch(err){
         console.error(err)
@@ -478,6 +478,18 @@ app.put('/changegroupname/:groupId', async(req, res) => {
         res.json(changeGroupName)
     }catch(err){
         console.err(err)
+    }
+})
+
+//get permision group
+app.post('/getpermission/:userEmail', async (req, res) => {
+    const { userEmail } = req.params
+    const { groupId } = req.body
+    try{
+        const getPermission = await pool.query(`SELECT isAdmin from user_in_groups WHERE user_email = $1 AND group_id = $2`, [userEmail, groupId])
+        res.json(getPermission.rows[0].isadmin)
+    }catch(err){
+        console.error(err)
     }
 })
 
