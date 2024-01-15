@@ -13,9 +13,13 @@ CREATE TABLE todos (
 
 CREATE TABLE todos_groups (
     id VARCHAR(255) PRIMARY KEY,
-    assigned VARCHAR(255),
+    whoassigned VARCHAR(255) REFERENCES users (email), 
+    assigned VARCHAR(255) REFERENCES users (email),
     title VARCHAR(30),
-    finish_date DATE NOT NULL,
+    day_date INTEGER,
+    month_date INTEGER,
+    year_date INTEGER,
+    s_date VARCHAR(255),
     points INTEGER,
     group_id VARCHAR(255) REFERENCES groups (id)
 );
