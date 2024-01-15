@@ -75,6 +75,36 @@ app.get('/getgroupname/:groupId', async (req, res) => {
     }
 })
 
+//get todaytaskuser
+app.post('/gettodaytaskuser/:userEmail', async (req, res) => {
+    
+    const { userEmail } = req.params
+    const { groupId } = req.body;
+    let d = new Date() 
+    d.setTime( d.getTime() + 3600000 )
+    try {
+        const day = d.getDate()
+        const month = d.getMonth() + 1
+        const year = d.getFullYear()
+        const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned FROM todos_groups WHERE assignedto = $1 AND group_id = $2 AND day_date = $3 AND month_date = $4 AND year_date = $5 AND finished = false`, [userEmail, groupId, day, month, year])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//today task user
+app.post('/finishtaskgroup/:taskId', async (req, res) => {
+
+    const {taskId} = req.params
+    
+    try {
+        const changeTaskToAccept = await pool.query(`UPDATE todos_groups SET finished= true WHERE id = $1`, [taskId])
+        res.json(changeTaskToAccept)
+    } catch (err){
+        console.error(err)
+    }
+})
 
 //get all tasks group single user
 app.post('/gettasksgroupuser', async (req, res) => {
@@ -83,6 +113,45 @@ app.post('/gettasksgroupuser', async (req, res) => {
     
     try {
         const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned FROM todos_groups WHERE assignedto = $1 AND group_id = $2`, [userEmail, groupId])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get all tasks today
+app.post('/getincominggrouptasks/:userEmail', async (req, res) => {
+    
+    const { userEmail } = req.params;
+    const {groupId} = req.body
+    let d = new Date()
+    d.setTime( d.getTime() + 3600000 )
+    try {
+        const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date , points, whoassigned FROM todos_groups WHERE assignedto = $1 AND group_id = $2 AND s_date > $3 LIMIT 10`, [userEmail, groupId, d])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//delete tasks group single user
+app.delete('/accepttask/:taskId', async (req, res) => {
+
+    const {taskId} = req.params
+    console.log(taskId)
+    try {
+        const tasks = await pool.query(`DELETE FROM todos_groups WHERE id = $1`, [taskId])
+        res.json(tasks.rows)
+    } catch (err){
+        console.error(err)
+    }
+})
+
+//get all tasks group single user to finish
+app.get('/getfinishedtasks/:groupId', async (req, res) => {
+    const {groupId} = req.params
+    try {
+        const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned FROM todos_groups WHERE  group_id = $1 AND finished = true`, [ groupId])
         res.json(tasks.rows)
     } catch (err){
         console.error(err)
