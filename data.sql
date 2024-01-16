@@ -53,12 +53,13 @@ CREATE TABLE objectives (
 CREATE TABLE objectives_groups (
     id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(25),
-    assigned VARCHAR(255),
+    assignedTo VARCHAR(255) REFERENCES users (email),
     min_points INTEGER,
     max_points INTEGER,
     current_points INTEGER,
     isFinished BOOLEAN,
-    group_id VARCHAR(255) REFERENCES groups (id)
+    group_id VARCHAR(255) REFERENCES groups (id),
+    createdBy VARCHAR(255) REFERENCES users (email)
 );
 
 CREATE TABLE users_objectives_connection (
