@@ -669,8 +669,8 @@ app.delete('/deleteobjective/:objectiveid', async(req, res) => {
     const {objectiveid} = req.params
     try{
         const deleteObjectiveConnection = await pool.query('DELETE FROM users_objectives_connection WHERE objective_id = $1', [objectiveid])
+        const deleteActiveObjective = await pool.query('DELETE FROM active_objective WHERE objective_id = $1', [objectiveid])
         const deleteObjective = await pool.query('DELETE FROM objectives WHERE id = $1', [objectiveid])
-        res.json(deleteObjectiveConnection)
         res.json(deleteObjective)
     }catch(err){
         console.error(err)
