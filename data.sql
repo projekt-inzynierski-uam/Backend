@@ -31,7 +31,8 @@ CREATE TABLE users (
 
 CREATE TABLE groups (
     id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255)
+    name VARCHAR(255),
+    createdby VARCHAR(255) REFERENCES users (email)
 );
 
 CREATE TABLE user_in_groups (
@@ -71,12 +72,6 @@ CREATE TABLE users_objectives_connection (
 CREATE TABLE active_objective (
     id SERIAL PRIMARY KEY,
     objective_id VARCHAR(255) REFERENCES objectives (id),
-    user_email VARCHAR(255) REFERENCES users (email)
-);
-
-CREATE TABLE active_objective_group (
-    id SERIAL PRIMARY KEY,
-    objective_id VARCHAR(255) REFERENCES objectives_groups (id),
     user_email VARCHAR(255) REFERENCES users (email)
 );
 

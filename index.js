@@ -354,7 +354,7 @@ app.post('/group', async (req, res) => {
     const {group_name, email} = req.body
     const id = v4()
     try{
-        const newGroup = await pool.query(`INSERT INTO groups(id, name) VALUES ($1, $2)`, [id, group_name])
+        const newGroup = await pool.query(`INSERT INTO groups(id, name, createdby) VALUES ($1, $2, $3)`, [id, group_name, email])
         const addGroupOwner = await pool.query(`INSERT INTO user_in_groups(group_id, user_email, isAdmin) VALUES ($1, $2, true)`, [id, email])
         res.json(newGroup)
         res.json(addGroupOwner)
@@ -415,9 +415,16 @@ app.delete('/deletegroup/:groupID', async(req, res) => {
 app.delete('/removeuser/', async(req, res) => {
     const {groupId, email} = req.body
     try{
-        const deleteFromGroupConnects = await pool.query('DELETE from user_in_groups WHERE group_id = $1 AND user_email = $2', [groupId, email])
-        res.json(deleteFromGroupConnects)
+        const getGroupAdmin = await pool.query(`SELECT createdby FROM groups WHERE id = $1`,[groupId])
+        const {createdby} = getGroupAdmin.rows[0]
+        if(email == createdby){
+            res.status(400).send(new Error('Błąd'))
+        }else{
+            const deleteFromGroupConnects = await pool.query('DELETE from user_in_groups WHERE group_id = $1 AND user_email = $2', [groupId, email])
+            res.json(deleteFromGroupConnects)
+        }
     }catch(err){
+        res.status(400).send(new Error('Błąd'))
         console.error(err)
     }
 })
