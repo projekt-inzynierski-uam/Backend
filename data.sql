@@ -14,8 +14,9 @@ CREATE TABLE todos (
 CREATE TABLE todos_groups (
     id VARCHAR(255) PRIMARY KEY,
     whoassigned VARCHAR(255) REFERENCES users (email), 
-    assigned VARCHAR(255) REFERENCES users (email),
+    assignedto VARCHAR(255) REFERENCES users (email),
     title VARCHAR(30),
+    finished BOOLEAN,
     day_date INTEGER,
     month_date INTEGER,
     year_date INTEGER,
@@ -31,7 +32,8 @@ CREATE TABLE users (
 
 CREATE TABLE groups (
     id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255)
+    name VARCHAR(255),
+    createdby VARCHAR(255) REFERENCES users (email)
 );
 
 CREATE TABLE user_in_groups (
@@ -53,12 +55,13 @@ CREATE TABLE objectives (
 CREATE TABLE objectives_groups (
     id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(25),
-    assigned VARCHAR(255),
+    assignedTo VARCHAR(255) REFERENCES users (email),
     min_points INTEGER,
     max_points INTEGER,
     current_points INTEGER,
     isFinished BOOLEAN,
-    group_id VARCHAR(255) REFERENCES groups (id)
+    group_id VARCHAR(255) REFERENCES groups (id),
+    createdBy VARCHAR(255) REFERENCES users (email)
 );
 
 CREATE TABLE users_objectives_connection (
@@ -72,6 +75,7 @@ CREATE TABLE active_objective (
     objective_id VARCHAR(255) REFERENCES objectives (id),
     user_email VARCHAR(255) REFERENCES users (email)
 );
+
 
 CREATE TABLE Invites (
     id SERIAL PRIMARY KEY,
