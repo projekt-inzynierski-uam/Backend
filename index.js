@@ -75,6 +75,20 @@ app.get('/getgroupname/:groupId', async (req, res) => {
     }
 })
 
+//get group acces
+app.post('/getgroupaccess/:groupId', async (req, res) => {
+    
+    const { groupId } = req.params;
+    const { userEmail } = req.body
+    
+    try {
+        const access = await pool.query(`SELECT EXISTS(SELECT * FROM user_in_groups WHERE group_id = $1 AND user_email = $2)`, [groupId, userEmail])
+        res.json(access)
+    } catch (err){
+        console.error(err)
+    }
+})
+
 //get todaytaskuser
 app.post('/gettodaytaskuser/:userEmail', async (req, res) => {
     
@@ -135,13 +149,22 @@ app.post('/getincominggrouptasks/:userEmail', async (req, res) => {
 })
 
 //delete tasks group single user
-app.delete('/accepttask/:taskId', async (req, res) => {
+app.put('/accepttask/:taskId', async (req, res) => {
 
     const {taskId} = req.params
-    console.log(taskId)
+    const{ userEmail, groupId, points} = req.body
     try {
-        const tasks = await pool.query(`DELETE FROM todos_groups WHERE id = $1`, [taskId])
-        res.json(tasks.rows)
+        const isActiveObjectiveExist = await pool.query(`SELECT EXISTS(SELECT * FROM objectives_groups WHERE assignedto = $1 AND group_id = $2)`, [userEmail, groupId])
+        let { exists } = isActiveObjectiveExist.rows[0]
+        if(!exists){
+            const tasks = await pool.query(`DELETE FROM todos_groups WHERE id = $1`, [taskId])
+            res.json(tasks.rows)
+        }else{
+            const activeObjectiveId = await pool.query(`SELECT id FROM objectives_groups WHERE assignedto = $1 AND group_id = $2`, [userEmail, groupId])
+            const deleteTask = await pool.query(`DELETE FROM todos_groups WHERE id = $1`, [taskId])
+            const updateObjective = await pool.query('UPDATE objectives_groups SET current_points =  current_points + $1 WHERE id = $2', [points,activeObjectiveId.rows[0].id])
+            res.json(updateObjective)
+        }
     } catch (err){
         console.error(err)
     }
@@ -151,7 +174,7 @@ app.delete('/accepttask/:taskId', async (req, res) => {
 app.get('/getfinishedtasks/:groupId', async (req, res) => {
     const {groupId} = req.params
     try {
-        const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned FROM todos_groups WHERE  group_id = $1 AND finished = true`, [ groupId])
+        const tasks = await pool.query(`SELECT id, title, year_date, month_date, day_date, points, whoassigned, assignedto FROM todos_groups WHERE  group_id = $1 AND finished = true`, [ groupId])
         res.json(tasks.rows)
     } catch (err){
         console.error(err)
@@ -504,6 +527,26 @@ app.get('/activeobjective/:userEmail', async (req, res) => {
     }
 })
 
+//get active objective group
+app.post('/activeobjectivegroup/:userEmail', async (req, res) => {
+
+    const { userEmail } = req.params;
+    const { groupId } = req.body;
+    
+    try {
+        const isActiveObjectiveExist = await pool.query(`SELECT EXISTS(SELECT * FROM objectives_groups WHERE assignedto = $1 AND group_id = $2)`, [userEmail, groupId])
+        let { exists } = isActiveObjectiveExist.rows[0]
+        if(!exists){
+            res.json({title:"Ustaw cel", current_points:"0", max_points:"0"},{title:"Ustaw cel", current_points:"0", max_points:"0"})
+        }else{
+            const getActiveObjectives = await pool.query(`SELECT id, title, max_points, current_points FROM objectives_groups WHERE assignedto = $1 AND group_id = $2`, [userEmail, groupId])
+            res.json(getActiveObjectives.rows)
+        }
+    } catch (err){
+        console.error(err)
+    }
+})
+
 //edit active objective
 
 app.put('/editactiveobjective/:userEmail', async(req, res) => {
@@ -550,7 +593,7 @@ app.get('/unfinishedobjectivesgroup/:groupId', async (req, res) => {
     const { groupId } = req.params;
     
     try {
-        const groups = await pool.query(`SELECT id, title, max_points, current_points FROM objectives_groups  WHERE group_id = $1 AND isFinished = 'no'`, [groupId])
+        const groups = await pool.query(`SELECT id, title, max_points, current_points, assignedto, createdby FROM objectives_groups  WHERE group_id = $1 AND isFinished = 'false'`, [groupId])
         res.json(groups.rows)
     } catch (err){
         console.error(err)
@@ -586,10 +629,10 @@ app.post('/createobjective', async (req, res) => {
 
 //create objective
 app.post('/createobjectivegroup', async (req, res) => {
-    const {title, min_points, max_points, groupId} = req.body
+    const {title, min_points, max_points, groupId, userEmail} = req.body
     const id = v4()
     try{
-        const newObjective = await pool.query(`INSERT INTO objectives_groups (id, title, min_points, max_points, current_points, isFinished, group_id) VALUES ($1, $2, $3, $4, $3, 'false', $5)`, [id,title, min_points, max_points, groupId])
+        const newObjective = await pool.query(`INSERT INTO objectives_groups (id, title, min_points, max_points, current_points, isFinished, group_id, createdby) VALUES ($1, $2, $3, $4, $3, 'false', $5, $6)`, [id,title, min_points, max_points, groupId, userEmail])
         res.json(newObjective)
         res.json(newConnection)
     }catch(err){
@@ -621,7 +664,7 @@ app.put('/editobjectivetofinished/:objectiveid', async(req, res) => {
     }
 })
 
-//delete finished objective
+//delete objective
 app.delete('/deleteobjective/:objectiveid', async(req, res) => {
     const {objectiveid} = req.params
     try{
@@ -629,6 +672,17 @@ app.delete('/deleteobjective/:objectiveid', async(req, res) => {
         const deleteObjective = await pool.query('DELETE FROM objectives WHERE id = $1', [objectiveid])
         res.json(deleteObjectiveConnection)
         res.json(deleteObjective)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//delete group objective
+app.delete('/deletegroupobjective/:objectiveid', async(req, res) => {
+    const {objectiveid} = req.params
+    try{
+        const deleteObjectiveConnection = await pool.query('DELETE FROM objectives_groups WHERE id = $1', [objectiveid])
+        res.json(deleteObjectiveConnection)
     }catch(err){
         console.error(err)
     }
@@ -653,6 +707,17 @@ app.post('/getpermission/:userEmail', async (req, res) => {
     try{
         const getPermission = await pool.query(`SELECT isAdmin from user_in_groups WHERE user_email = $1 AND group_id = $2`, [userEmail, groupId])
         res.json(getPermission.rows[0].isadmin)
+    }catch(err){
+        console.error(err)
+    }
+})
+
+//get permision group
+app.put('/changeconnection/', async (req, res) => {
+    const {targetEmail, targetObjective} = req.body
+    try{
+        const changeConnection = await pool.query('UPDATE objectives_groups SET assignedto = $1 WHERE id = $2', [targetEmail, targetObjective])
+        res.json(changeConnection)
     }catch(err){
         console.error(err)
     }
