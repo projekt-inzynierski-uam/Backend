@@ -517,15 +517,30 @@ app.delete('/declineinvite', async (req, res) => {
 //signup
 
 app.post('/signup', async (req, res) =>{
-    const {email, password} = req.body
+    const {email, password, confirmPassword} = req.body
     const salt = bcrypt.genSaltSync(10)
     const hashedPassword = bcrypt.hashSync(password, salt)
     try{
-        const signUp = await pool.query('INSERT INTO users (email, hashed_password) VALUES ($1, $2)',[email, hashedPassword])
+        const repeatedUser = await pool.query(`SELECT EXISTS(SELECT email from users WHERE email = $1)`, [email])
 
-        const token = jwt.sign({email}, 'secret', {expiresIn:'1hr'})
+        const { exists } = repeatedUser.rows[0]
 
-        res.json({email, token})
+        if(exists){
+            res.status(400).send(new Error('Taki uzytkownik juz istnieje'))
+        }
+        else if(password.length < 6){
+            res.status(400).send(new Error('Zła długość hasła'))
+        }
+        else if(password !== confirmPassword){
+            res.status(400).send(new Error('Hasła się nie zgadzają'))
+        }else{
+            const signUp = await pool.query('INSERT INTO users (email, hashed_password) VALUES ($1, $2)',[email, hashedPassword])
+
+            const token = jwt.sign({email}, 'secret', {expiresIn:'1hr'})
+
+            res.json({email, token})
+        }
+
     }catch(err){
         console.error(err)
         if(err){
